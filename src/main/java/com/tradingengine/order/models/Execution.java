@@ -3,10 +3,14 @@ package com.tradingengine.order.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -25,6 +29,9 @@ public class Execution {
     @ManyToOne
     @JoinColumn(referencedColumnName = "orderId", nullable = false)
     private ClientOrder clientOrder;
+
+    @Column(name = "createdAt")
+    private LocalDate createdAt;
 
     @Column(name = "quantity")
     private Integer quantity;

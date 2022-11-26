@@ -3,10 +3,12 @@ package com.tradingengine.order.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -27,7 +29,7 @@ public class Portfolio {
 
     @ManyToOne
     @JoinColumn(referencedColumnName = "username", nullable = false)
-    private Client username;
+    private Client client;
 
     @Column(name = "balance")
     private Double balance;

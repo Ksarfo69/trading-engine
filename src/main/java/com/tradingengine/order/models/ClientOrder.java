@@ -2,10 +2,12 @@ package com.tradingengine.order.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -20,10 +22,6 @@ public class ClientOrder {
             generator = "order_id_sequence"
     )
     private Long orderId;
-
-    @ManyToOne
-    @JoinColumn(referencedColumnName = "portfolioId", nullable = false)
-    private Portfolio portfolio;
 
     @ManyToOne
     @JoinColumn(referencedColumnName = "holdingId")

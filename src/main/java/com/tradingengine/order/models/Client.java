@@ -14,17 +14,18 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Client {
     @Id
+    @Column(name = "username", unique = true)
     private String username;
 
-    @Column(name="firstName")
+    @Column(name="firstName", nullable = false)
     private String firstName;
 
-    @Column(name="lastName")
+    @Column(name="lastName", nullable = false)
     private String lastName;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "password")
+    @Column(name = "password", nullable = false)
     private String password;
 }

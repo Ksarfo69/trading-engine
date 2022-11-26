@@ -2,13 +2,14 @@ package com.tradingengine.order.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Cache;
 
 import java.time.LocalDate;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -41,6 +42,9 @@ public class Holding {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private HoldingStatus status;
+
+    @Column(name = "createdAt")
+    private LocalDate createdAt;
 
     @Column(name = "updatedAt")
     private LocalDate updatedAt;
