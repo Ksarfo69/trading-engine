@@ -11,4 +11,6 @@ import java.util.List;
 public interface HoldingRepository extends JpaRepository<Holding, Long> {
 
     List<Holding> findAllByPortfolio(Portfolio portfolio);
+
+    Holding findOneByPortfolio(Portfolio portfolio);
 }

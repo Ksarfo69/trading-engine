@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class HoldingService {
@@ -41,4 +42,29 @@ public class HoldingService {
     {
         return holdingRepository.findAllByPortfolio(portfolio);
     }
+
+
+    public Holding updateHolding(Long holdingId, Holding holding)
+    {
+        Holding repHolding = holdingRepository.findById(holdingId).get();
+
+        if (Objects.nonNull(holding.getAccumulatedProfit()))
+        {
+            repHolding.setAccumulatedProfit(holding.getAccumulatedProfit());
+        }
+
+        if(Objects.nonNull(holding.getStatus()))
+        {
+            repHolding.setStatus(holding.getStatus());
+        }
+
+        if (Objects.nonNull(holding.getUpdatedAt()))
+        {
+            repHolding.setUpdatedAt(holding.getUpdatedAt());
+        }
+
+        return holdingRepository.save(repHolding);
+
+    }
+
 }

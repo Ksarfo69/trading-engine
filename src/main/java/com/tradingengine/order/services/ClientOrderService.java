@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ClientOrderService {
@@ -30,13 +31,11 @@ public class ClientOrderService {
         ClientOrder clientOrder;
 
 
-        Ticker ticker = tickerRepository.findTickerByTickerName(request.tickerName());
 
         if(request.side() == Side.BUY)
         {
             clientOrder = ClientOrder.builder()
                     .holding(holding)
-                    .ticker(ticker)
                     .quantity(request.quantity())
                     .price(request.price())
                     .side(request.side())
@@ -49,7 +48,6 @@ public class ClientOrderService {
 
             clientOrder = ClientOrder.builder()
                     .holding(sellingHolding)
-                    .ticker(ticker)
                     .quantity(request.quantity())
                     .price(request.price())
                     .side(request.side())
@@ -73,12 +71,20 @@ public class ClientOrderService {
     }
 
 
-    public List<ClientOrder> fetchAllOrdersByUsername(String username)
-    {
-        Client client = clientRepository.findClientByUsername(username);
+    public ClientOrder updateClientOrder(Long orderId, ClientOrder clientOrder) {
 
-        Portfolio portfolio = portfolioRepository.findOneByClient(client);
+        ClientOrder repClientOrder = clientOrderRepository.findById(orderId).get();
 
-        return clientOrderRepository.findAllByHolding(portfolio);
+        if(Objects.nonNull(clientOrder.getOrderStatus()))
+        {
+            repClientOrder.setOrderStatus(clientOrder.getOrderStatus());
+        }
+
+        if(Objects.nonNull(clientOrder.getProfit()))
+        {
+            repClientOrder.setProfit(clientOrder.getProfit());
+        }
+
+        return clientOrderRepository.save(repClientOrder);
     }
 }

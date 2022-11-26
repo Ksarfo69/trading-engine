@@ -1,5 +1,8 @@
-package com.tradingengine.order.models;
+package com.tradingengine.order.services;
 
+import com.tradingengine.order.models.ClientOrder;
+import com.tradingengine.order.models.Execution;
+import com.tradingengine.order.models.ExecutionRegistrationRequest;
 import com.tradingengine.order.repositories.ExecutionRepository;
 import com.tradingengine.order.services.ClientOrderService;
 import org.springframework.beans.factory.annotation.Autowired;

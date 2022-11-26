@@ -27,10 +27,6 @@ public class ClientOrder {
     @JoinColumn(referencedColumnName = "holdingId")
     private Holding holding;
 
-    @ManyToOne
-    @JoinColumn(referencedColumnName = "tickerName", nullable = false)
-    private Ticker ticker;
-
     @Column(name = "quantity")
     private Integer quantity;
 

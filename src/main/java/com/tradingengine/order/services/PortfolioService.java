@@ -1,14 +1,17 @@
 package com.tradingengine.order.services;
 
 import com.tradingengine.order.models.Client;
+import com.tradingengine.order.models.Holding;
 import com.tradingengine.order.models.Portfolio;
 import com.tradingengine.order.models.PortfolioRegistrationRequest;
 import com.tradingengine.order.repositories.ClientRepository;
+import com.tradingengine.order.repositories.HoldingRepository;
 import com.tradingengine.order.repositories.PortfolioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PortfolioService {
@@ -18,6 +21,9 @@ public class PortfolioService {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @Autowired
+    private HoldingRepository holdingRepository;
 
 
     public Portfolio savePortfolio(String username, PortfolioRegistrationRequest request)
@@ -51,10 +57,19 @@ public class PortfolioService {
         return portfolioRepository.findAllByClient(client);
     }
 
-    public Portfolio fetchOnePortfolioByUsername(String username)
-    {
-        Client client = clientRepository.findClientByUsername(username);
+    public Portfolio updatePortfolio(Long portfolioId, Portfolio portfolio) {
+        Portfolio repPortfolio = portfolioRepository.findById(portfolioId).get();
 
-        return portfolioRepository.findOneByClient(client);
+        if(Objects.nonNull(portfolio.getPortfolioName()) && !"".equalsIgnoreCase(portfolio.getPortfolioName()))
+        {
+            repPortfolio.setPortfolioName(portfolio.getPortfolioName());
+        }
+
+        if(Objects.nonNull(portfolio.getBalance()))
+        {
+            repPortfolio.setBalance(portfolio.getBalance());
+        }
+
+        return portfolioRepository.save(repPortfolio);
     }
 }

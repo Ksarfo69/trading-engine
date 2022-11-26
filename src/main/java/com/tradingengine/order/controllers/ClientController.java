@@ -47,11 +47,11 @@ public class ClientController {
     }
 
 
-    @GetMapping("/client/{username}")
-    public List<ClientOrder> fetchAllClientOrders(@PathVariable(name = "username") String username)
-    {
-        return clientService.fetchAllClientOrders(username);
-    }
+//    @GetMapping("/client/{portfolioId}/holding")
+//    public List<Holding> fetchAllClientOrders(@PathVariable(name = "portfolioId") Long portfolioId)
+//    {
+//        return clientService.fetchAllClientHoldingByPortfolio(portfolioId);
+//    }
 
 
 }
