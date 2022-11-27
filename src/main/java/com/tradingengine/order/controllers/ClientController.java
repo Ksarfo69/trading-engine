@@ -14,27 +14,27 @@ public class ClientController {
     private ClientService clientService;
 
     @PostMapping("/client")
-    public Client saveClient(@RequestBody Client client)
+    public String saveClient(@RequestBody Client client)
     {
         return clientService.saveClient(client);
     }
 
 
     @GetMapping("/client/{username}/portfolio")
-    public List<Portfolio> fetchAllClientPortfolios(@PathVariable(name = "username") String username)
+    public List<FetchPortfolioResponse> fetchAllClientPortfolios(@PathVariable(name = "username") String username)
     {
         return clientService.fetchAllClientPortfolios(username);
     }
 
     @PostMapping("/client/{username}/portfolio")
-    public Portfolio createNewPortfolio(@PathVariable(name="username") String username, @RequestBody PortfolioRegistrationRequest request)
+    public String createNewPortfolio(@PathVariable(name="username") String username, @RequestBody PortfolioRegistrationRequest request)
     {
         return clientService.createPortfolio(username, request);
     }
 
 
     @PostMapping("/client/{portfolioId}/order")
-    public ClientOrder createNewOrder(@PathVariable(name="portfolioId") Long portfolioId, @RequestBody ClientOrderRegistrationRequest request)
+    public String createNewOrder(@PathVariable(name="portfolioId") Long portfolioId, @RequestBody ClientOrderRegistrationRequest request)
     {
         return clientService.createOrder(portfolioId, request);
     }
@@ -47,11 +47,17 @@ public class ClientController {
     }
 
 
-//    @GetMapping("/client/{portfolioId}/holding")
-//    public List<Holding> fetchAllClientOrders(@PathVariable(name = "portfolioId") Long portfolioId)
-//    {
-//        return clientService.fetchAllClientHoldingByPortfolio(portfolioId);
-//    }
+    @GetMapping("/client/{portfolioId}/orders")
+    public List<FetchOrderResponse> fetchAllClientOrdersByPortfolio(@PathVariable(name = "portfolioId") Long portfolioId)
+    {
+        return clientService.fetchAllClientHoldingByPortfolio(portfolioId);
+    }
+
+    @GetMapping("/client/executions/{orderId}")
+    public List<FetchExecutionResponse> fetchAllExecutionsForClientOrder(@PathVariable(name = "orderId") Long orderId)
+    {
+        return clientService.fetchAllExecutionsForClientOrder(orderId);
+    }
 
 
 }

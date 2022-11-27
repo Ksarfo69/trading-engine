@@ -1,6 +1,7 @@
 package com.tradingengine.order.services;
 
 import com.tradingengine.order.models.*;
+import com.tradingengine.order.repositories.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,40 +17,81 @@ import java.util.Optional;
 public class AdminService {
 
     @Autowired
-    private TickerService tickerService;
+    private ExecutionRepository executionRepository;
 
     @Autowired
-    private ExecutionService executionService;
+    private ClientOrderRepository clientOrderRepository;
 
     @Autowired
-    private PortfolioService portfolioService;
+    private TickerRepository tickerRepository;
 
     @Autowired
-    private ClientOrderService clientOrderService;
+    private PortfolioRepository portfolioRepository;
 
     @Autowired
-    private HoldingService holdingService;
+    private HoldingRepository holdingRepository;
 
 
-    public Ticker newTicker(Ticker ticker)
+    public String newTicker(Ticker ticker)
     {
         log.info("Saving ticker with details: {}", ticker);
 
-        Ticker repTicker = tickerService.saveTicker(ticker);
+        Ticker repTicker = tickerRepository.save(ticker);
 
         log.info("Ticker saved successfully with details: {}", ticker);
 
-        return repTicker;
+        return "Ticker saved successfully";
     }
 
-
-    public Execution newExecution(Long orderId, ExecutionRegistrationRequest request)
+    public String newExecution(Long orderId, ExecutionRegistrationRequest request)
     {
         log.info("Execution received with details: {}", request);
 
-        Execution repExecution = executionService.saveExecution(orderId, request).get();
+        Execution repExecution = saveExecution(orderId, request).get();
 
+        processExecution(repExecution);
+
+        return "Execution processed successfully";
+    }
+
+
+    public Optional<Execution> saveExecution(Long orderId, ExecutionRegistrationRequest request)
+    {
+        ClientOrder clientOrder = clientOrderRepository.findById(orderId).get();
+
+        //if execution quantity not greater that order quantity
+        if(request.quantity() <= clientOrder.getQuantity())
+        {
+            Double engineProfit;
+            if(clientOrder.getSide() == Side.BUY)
+            {
+                engineProfit = clientOrder.getPrice() - request.price();
+            }
+            else
+            {
+                engineProfit = request.price() - clientOrder.getPrice();
+            }
+
+            Execution execution = Execution.builder()
+                    .clientOrder(clientOrder)
+                    .createdAt(LocalDate.now())
+                    .quantity(request.quantity())
+                    .price(request.price())
+                    .engineProfit(engineProfit)
+                    .build();
+
+            Execution repExecution = executionRepository.save(execution);
+
+            return Optional.of(repExecution);
+        }
+
+        return Optional.empty();
+    }
+
+    public Execution processExecution(Execution repExecution)
+    {
         ClientOrder clientOrder = repExecution.getClientOrder();
+
 
 
         //buy order
@@ -94,48 +136,43 @@ public class AdminService {
         }
 
 
-        Portfolio repPortfolio = portfolioService.updatePortfolio(portfolio.getPortfolioId(), portfolio);
+        Portfolio repPortfolio = updatePortfolio(portfolio.getPortfolioId(), portfolio);
 
         log.info("Client balance updated successfully to {}", repPortfolio.getBalance());
 
     }
 
+    public Portfolio updatePortfolio(Long portfolioId, Portfolio portfolio) {
+        Portfolio repPortfolio = portfolioRepository.findById(portfolioId).get();
 
-    public void performProfitCheckForFullExecution(Execution execution, ClientOrder clientOrder)
-    {
-        log.info("Running P&L assessment on order : {}", clientOrder);
+        if(Objects.nonNull(portfolio.getPortfolioName()) && !"".equalsIgnoreCase(portfolio.getPortfolioName()))
+        {
+            repPortfolio.setPortfolioName(portfolio.getPortfolioName());
+        }
 
-        Double profit = (execution.getPrice() - clientOrder.getPrice()) * execution.getQuantity();
+        if(Objects.nonNull(portfolio.getBalance()))
+        {
+            repPortfolio.setBalance(portfolio.getBalance());
+        }
 
-        clientOrder.setProfit(clientOrder.getProfit() + profit);
-
-        ClientOrder repOrder = clientOrderService.updateClientOrder(clientOrder.getOrderId(), clientOrder);
-
-        log.info("P&L assessed and updated in order table successfully with details : {}", repOrder);
-
-        log.info("Getting the holding details for execution: {}", execution);
-        Holding holding = clientOrder
-                .getHolding();
-
-        log.info("Updating accumulated profit on holding: {}", holding);
-
-        holding.setAccumulatedProfit(holding.getAccumulatedProfit() + profit);
-        holdingService.updateHolding(holding.getHoldingId(), holding);
-
-        log.info("Accumulated profit updated successfully on holding: {}", holding);
-
+        return portfolioRepository.save(repPortfolio);
     }
+
 
 
     public Boolean checkForFullOrderExecution(Execution execution) {
 
         ClientOrder clientOrder = execution.getClientOrder();
 
-        //find accumulation from current execution
-        Integer accumulatedQuantity = clientOrder.getHolding().getQuantity() + execution.getQuantity();
-
-        //if executed fully
-        if (accumulatedQuantity == clientOrder.getQuantity()) {
+        //if executed fully for buy
+        if (clientOrder.getSide() == Side.BUY &&
+                clientOrder.getHolding().getQuantity()  == clientOrder.getQuantity())
+        {
+            return true;
+        }
+        else if(clientOrder.getSide() == Side.SELL &&
+                clientOrder.getHolding().getQuantity()  <= 0)
+        {
             return true;
         }
         return false;
@@ -154,9 +191,32 @@ public class AdminService {
         log.info("Updating accumulated profit on holding: {}", holding);
 
         holding.setAccumulatedProfit(holding.getAccumulatedProfit() + profit);
-        holdingService.updateHolding(holding.getHoldingId(), holding);
+        updateHolding(holding.getHoldingId(), holding);
 
         log.info("Accumulated profit updated successfully on holding: {}", holding);
+    }
+
+    public Holding updateHolding(Long holdingId, Holding holding)
+    {
+        Holding repHolding = holdingRepository.findById(holdingId).get();
+
+        if (Objects.nonNull(holding.getAccumulatedProfit()))
+        {
+            repHolding.setAccumulatedProfit(holding.getAccumulatedProfit());
+        }
+
+        if(Objects.nonNull(holding.getStatus()))
+        {
+            repHolding.setStatus(holding.getStatus());
+        }
+
+        if (Objects.nonNull(holding.getUpdatedAt()))
+        {
+            repHolding.setUpdatedAt(holding.getUpdatedAt());
+        }
+
+        return holdingRepository.save(repHolding);
+
     }
 
 
@@ -168,72 +228,33 @@ public class AdminService {
         //add the stock to holdings
         //execution creates holding
         if (Objects.isNull(clientOrder.getHolding())) {
-            log.info("Creating holding and attaching to portfolio: {}", clientOrder.getPortfolio());
 
-            HoldingRegistrationRequest request = new HoldingRegistrationRequest(
-                    clientOrder.getTicker(),
-                    execution.getQuantity()
-            );
-
-            Holding holding = holdingService.saveHolding(clientOrder.getPortfolio(), request);
-
-            log.info("Holding created successfully with details: {}", holding);
-
-
-            //update client order
-            clientOrder.setHolding(holding);
-
-            log.info("Holding inserted successfully into order with details: {}", holding);
+            populateClientHoldingOnBuyIfNull(execution, clientOrder);
 
             //change order status to partially fulfilled if pending
-            if (clientOrder.getOrderStatus() == OrderStatus.PENDING) {
-                log.info("Order executed partially. Setting order status to partially fulfilled.");
-
-                clientOrder.setOrderStatus(OrderStatus.PARTIALLY_FULFILLED);
-
-                log.info("Order status successfully set to partially fulfilled");
+            if(checkForFullOrderExecution(execution))
+            {
+                performStatusUpdateOnFulfilledOrders(clientOrder);
+            }
+            else if (clientOrder.getOrderStatus() == OrderStatus.PENDING) {
+                performStatusUpdateOnPartiallyFulfilledOrders(clientOrder);
             }
             return;
         }
 
+        //update holding
+        updateClientHoldingOnBuy(execution, clientOrder.getHolding());
 
         if(checkForFullOrderExecution(execution))
         {
-            log.info("Order executed fully. updating client holding");
-            //Client's holding
-            Holding holding = clientOrder.getHolding();
-            holding.setQuantity(holding.getQuantity() + execution.getQuantity());
-
-            log.info("Client holding updated successfully");
-
-
-            log.info("Setting order status to fulfilled.");
-            clientOrder.setOrderStatus(OrderStatus.FULFILLED);
-            clientOrderService.updateClientOrder(clientOrder.getOrderId(), clientOrder);
-
-            log.info("Order status successfully set to fulfilled");
+            //update order status
+            performStatusUpdateOnFulfilledOrders(clientOrder);
         }
         else {
-
-            log.info("Order executed fully. updating client holding");
-            //Client's holding
-            Holding holding = clientOrder.getHolding();
-            holding.setQuantity(holding.getQuantity() + execution.getQuantity());
-
-            log.info("Client holding updated successfully");
-
             //change order status to partially fulfilled if pending
             if (clientOrder.getOrderStatus() == OrderStatus.PENDING) {
-                log.info("Order executed partially. Setting order status to partially fulfilled.");
-
-                clientOrder.setOrderStatus(OrderStatus.PARTIALLY_FULFILLED);
-
-                log.info("Order status successfully set to partially fulfilled");
+                performStatusUpdateOnPartiallyFulfilledOrders(clientOrder);
             }
-
-            clientOrderService.updateClientOrder(clientOrder.getOrderId(), clientOrder);
-
-            log.info("Order updated successfully");
         }
 
     }
@@ -252,61 +273,34 @@ public class AdminService {
         {
             log.info("Execution quantity valid, proceeding with execution");
 
+            //update holding
+            updateClientHoldingOnSell(execution, holding);
+
             //if executed fully
             if (checkForFullOrderExecution(execution)) {
 
-                //update holding
-                log.info("updating holding to reflect execution");
-
                 holding.setStatus(HoldingStatus.SOLD);
-                holding.setQuantity(holding.getQuantity() - execution.getQuantity());
-                holdingService.updateHolding(holding.getHoldingId(), holding);
+                updateHolding(holding.getHoldingId(), holding);
 
-                log.info("holding quantity updated successfully");
-
-
+                //insert profit of fulfilled sell order to order table;
+                clientOrder.setProfit(holding.getAccumulatedProfit());
+                updateClientOrder(clientOrder.getOrderId(), clientOrder);
 
                 // change order status to fulfilled;
-                log.info("Order executed fully. Setting order status to fulfilled.");
+                performStatusUpdateOnFulfilledOrders(clientOrder);
 
-                clientOrder.setOrderStatus(OrderStatus.FULFILLED);
-
-                clientOrderService.updateClientOrder(clientOrder.getOrderId(), clientOrder);
-
-                log.info("Order status successfully set to fulfilled");
-
-
-
-                //calculate the profit
-                performProfitCheckForFullExecution(execution, clientOrder);
             }
             else
             {
-                //change asset quantity in holding
-                log.info("updating holding quantity to reflect execution");
-
-                holding.setQuantity(holding.getQuantity() - execution.getQuantity());
-                holdingService.updateHolding(holding.getHoldingId(), holding);
-
-                log.info("holding quantity updated successfully");
-
-
                 //change order status to partially fulfilled
                 if(clientOrder.getOrderStatus() == OrderStatus.PENDING)
                 {
-                    log.info("Order executed partially. Setting order status to partially fulfilled.");
-
-                    clientOrder.setOrderStatus(OrderStatus.PARTIALLY_FULFILLED);
-
-                    clientOrderService.updateClientOrder(clientOrder.getOrderId(), clientOrder);
-
-                    log.info("Order status successfully set to partially fulfilled");
+                    performStatusUpdateOnPartiallyFulfilledOrders(clientOrder);
                 }
-
-
-                //check for profit
-                performProfitCheckForPartialExecution(execution, holding);
             }
+
+            //check for profit
+            performProfitCheckForPartialExecution(execution, holding);
 
             //update portfolio balance to reflect execution
             updatePortfolioBalance(execution, clientOrder);
@@ -316,17 +310,34 @@ public class AdminService {
         log.info("Profit of {} realised by engine", execution.getEngineProfit());
     }
 
+    public String updateClientOrder(Long orderId, ClientOrder clientOrder) {
 
-    public void populateClientOrderHoldingOnBuyIfNull(Execution execution, ClientOrder clientOrder)
+        ClientOrder repClientOrder = clientOrderRepository.findById(orderId).get();
+
+        if(Objects.nonNull(clientOrder.getOrderStatus()))
+        {
+            repClientOrder.setOrderStatus(clientOrder.getOrderStatus());
+        }
+
+        if(Objects.nonNull(clientOrder.getProfit()))
+        {
+            repClientOrder.setProfit(clientOrder.getProfit());
+        }
+
+        clientOrderRepository.save(repClientOrder);
+
+        return "ClientOrder updated successfully";
+    }
+
+    public void populateClientHoldingOnBuyIfNull(Execution execution, ClientOrder clientOrder)
     {
         log.info("Creating holding and attaching to portfolio: {}", clientOrder.getPortfolio());
 
         HoldingRegistrationRequest request = new HoldingRegistrationRequest(
-                clientOrder.getTicker(),
                 execution.getQuantity()
         );
 
-        Holding holding = holdingService.saveHolding(clientOrder.getPortfolio(), request);
+        Holding holding = saveHolding(clientOrder.getPortfolio(), request);
 
         log.info("Holding created successfully with details: {}", holding);
 
@@ -335,5 +346,59 @@ public class AdminService {
         clientOrder.setHolding(holding);
 
         log.info("Holding inserted successfully into order with details: {}", holding);
+    }
+
+    public Holding saveHolding(Portfolio portfolio, HoldingRegistrationRequest request)
+    {
+        Holding holding = Holding.builder()
+                .portfolio(portfolio)
+                .quantity(request.quantity())
+                .accumulatedProfit(0d)
+                .createdAt(LocalDate.now())
+                .status(HoldingStatus.AVAILABLE)
+                .build();
+
+        return holdingRepository.save(holding);
+    }
+
+    public void performStatusUpdateOnPartiallyFulfilledOrders(ClientOrder clientOrder)
+    {
+        log.info("Order executed partially. Setting order status to partially fulfilled.");
+
+        clientOrder.setOrderStatus(OrderStatus.PARTIALLY_FULFILLED);
+
+        updateClientOrder(clientOrder.getOrderId(), clientOrder);
+
+        log.info("Order status successfully set to partially fulfilled");
+    }
+
+    public void performStatusUpdateOnFulfilledOrders(ClientOrder clientOrder)
+    {
+        log.info("Order executed fully. Setting order status to fulfilled.");
+
+        clientOrder.setOrderStatus(OrderStatus.FULFILLED);
+
+        updateClientOrder(clientOrder.getOrderId(), clientOrder);
+
+        log.info("Order status successfully set to fulfilled");
+    }
+
+    public void updateClientHoldingOnBuy(Execution execution, Holding holding)
+    {
+        log.info("Updating client holding");
+
+        //Client's holding
+        holding.setQuantity(holding.getQuantity() + execution.getQuantity());
+
+        log.info("Client holding updated successfully");
+    }
+
+    public void updateClientHoldingOnSell(Execution execution, Holding holding)
+    {
+        log.info("updating holding to reflect execution");
+
+        holding.setQuantity(holding.getQuantity() - execution.getQuantity());
+
+        log.info("holding quantity updated successfully");
     }
 }

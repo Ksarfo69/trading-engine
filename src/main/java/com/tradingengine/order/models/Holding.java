@@ -29,10 +29,6 @@ public class Holding {
     @JoinColumn(referencedColumnName = "portfolioId", nullable = false)
     private Portfolio portfolio;
 
-    @ManyToOne
-    @JoinColumn(referencedColumnName = "tickerName", nullable = false)
-    private Ticker ticker;
-
     @Column(name = "quantity")
     private Integer quantity;
 

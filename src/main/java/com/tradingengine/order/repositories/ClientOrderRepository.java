@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface ClientOrderRepository extends JpaRepository<ClientOrder, Long> {
     List<ClientOrder> findAllByHolding(Portfolio portfolio);
+
+    List<ClientOrder> findAllByPortfolio(Portfolio portfolio);
 }
