@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -35,9 +36,9 @@ public class AdminService {
     private OrderProcessingService orderProcessingService;
 
 
-    /**
+    /** Receives a ticker from the request body and saves it into the repository
      * @param ticker
-     * @return
+     * @return "Ticker saved successfully" string
      */
     public String newTicker(Ticker ticker)
     {
@@ -51,6 +52,13 @@ public class AdminService {
     }
 
 
+    /** Receives an orderId from the path variable and an ExecutionRegistration request
+     * from the Request body.
+     * It calls @method saveExecution and after that passes the execution to the order processing service.
+     * @param orderId
+     * @param request
+     * @return "Execution processed successfully"
+     */
     public String newExecution(Long orderId, ExecutionRegistrationRequest request)
     {
         log.info("Execution received with details: {}", request);
@@ -63,12 +71,24 @@ public class AdminService {
     }
 
 
+    /** Receives an orderId and request from @method newExecution. validates the
+     * execution and saves it if valid.
+     * @param orderId
+     * @param request
+     * @return Optional execution depending on if the execution quantity is valid.
+     */
     public Optional<Execution> saveExecution(Long orderId, ExecutionRegistrationRequest request)
     {
         ClientOrder clientOrder = clientOrderRepository.findById(orderId).get();
 
-        //if execution quantity not greater that order quantity
-        if(request.quantity() <= clientOrder.getQuantity())
+        Holding holding = clientOrder.getHolding();
+
+        //if execution quantity than stock available
+        if(Objects.isNull(holding)
+                && request.quantity() <= clientOrder.getQuantity()
+                || Objects.nonNull(holding)
+                && request.quantity() <= clientOrder.getQuantity() - holding.getQuantity()
+        )
         {
             Double engineProfit;
             if(clientOrder.getSide() == Side.BUY)
