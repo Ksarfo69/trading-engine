@@ -1,7 +1,10 @@
 package com.tradingengine.order.services;
 
 import com.tradingengine.order.models.*;
-import com.tradingengine.order.repositories.*;
+import com.tradingengine.order.repositories.ClientOrderRepository;
+import com.tradingengine.order.repositories.ExecutionRepository;
+import com.tradingengine.order.repositories.HoldingRepository;
+import com.tradingengine.order.repositories.PortfolioRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,16 +24,16 @@ public class OrderProcessingService {
     private ClientOrderRepository clientOrderRepository;
 
     @Autowired
-    private TickerRepository tickerRepository;
-
-    @Autowired
     private PortfolioRepository portfolioRepository;
 
     @Autowired
     private HoldingRepository holdingRepository;
 
 
-
+    /**
+     * @param repExecution
+     * @return
+     */
     public Execution processExecution(Execution repExecution)
     {
         ClientOrder clientOrder = repExecution.getClientOrder();
@@ -54,6 +57,10 @@ public class OrderProcessingService {
     }
 
 
+    /**
+     * @param execution
+     * @param clientOrder
+     */
     public void updatePortfolioBalance(Execution execution, ClientOrder clientOrder)
     {
         //get portfolio
@@ -85,6 +92,11 @@ public class OrderProcessingService {
 
     }
 
+    /**
+     * @param portfolioId
+     * @param portfolio
+     * @return
+     */
     public Portfolio updatePortfolio(Long portfolioId, Portfolio portfolio) {
         Portfolio repPortfolio = portfolioRepository.findById(portfolioId).get();
 
@@ -102,7 +114,10 @@ public class OrderProcessingService {
     }
 
 
-
+    /**
+     * @param execution
+     * @return
+     */
     public Boolean checkForFullOrderExecution(Execution execution) {
 
         ClientOrder clientOrder = execution.getClientOrder();
@@ -122,6 +137,10 @@ public class OrderProcessingService {
     }
 
 
+    /**
+     * @param execution
+     * @param holding
+     */
     public void performProfitCheckForPartialExecution(Execution execution, Holding holding)
     {
         //Execution by execution based updating of holding profit
@@ -139,6 +158,11 @@ public class OrderProcessingService {
         log.info("Accumulated profit updated successfully on holding: {}", holding);
     }
 
+    /**
+     * @param holdingId
+     * @param holding
+     * @return
+     */
     public Holding updateHolding(Long holdingId, Holding holding)
     {
         Holding repHolding = holdingRepository.findById(holdingId).get();
@@ -163,6 +187,10 @@ public class OrderProcessingService {
     }
 
 
+    /**
+     * @param execution
+     * @param clientOrder
+     */
     public void performBuyExecutionProcedure(Execution execution, ClientOrder clientOrder) {
         log.info("Buy order execution, updating portfolio balance.");
 
@@ -203,6 +231,10 @@ public class OrderProcessingService {
     }
 
 
+    /**
+     * @param execution
+     * @param clientOrder
+     */
     public void performSellExecutionProcedure(Execution execution, ClientOrder clientOrder)
     {
         log.info("Sell order execution received with details: {}", execution);
@@ -253,6 +285,11 @@ public class OrderProcessingService {
         log.info("Profit of {} realised by engine", execution.getEngineProfit());
     }
 
+    /**
+     * @param orderId
+     * @param clientOrder
+     * @return
+     */
     public String updateClientOrder(Long orderId, ClientOrder clientOrder) {
 
         ClientOrder repClientOrder = clientOrderRepository.findById(orderId).get();
@@ -272,6 +309,10 @@ public class OrderProcessingService {
         return "ClientOrder updated successfully";
     }
 
+    /**
+     * @param execution
+     * @param clientOrder
+     */
     public void populateClientHoldingOnBuyIfNull(Execution execution, ClientOrder clientOrder)
     {
         log.info("Creating holding and attaching to portfolio: {}", clientOrder.getPortfolio());
@@ -291,6 +332,11 @@ public class OrderProcessingService {
         log.info("Holding inserted successfully into order with details: {}", holding);
     }
 
+    /**
+     * @param portfolio
+     * @param request
+     * @return
+     */
     public Holding saveHolding(Portfolio portfolio, HoldingRegistrationRequest request)
     {
         Holding holding = Holding.builder()
@@ -304,6 +350,9 @@ public class OrderProcessingService {
         return holdingRepository.save(holding);
     }
 
+    /**
+     * @param clientOrder
+     */
     public void performStatusUpdateOnPartiallyFulfilledOrders(ClientOrder clientOrder)
     {
         log.info("Order executed partially. Setting order status to partially fulfilled.");
@@ -315,6 +364,9 @@ public class OrderProcessingService {
         log.info("Order status successfully set to partially fulfilled");
     }
 
+    /**
+     * @param clientOrder
+     */
     public void performStatusUpdateOnFulfilledOrders(ClientOrder clientOrder)
     {
         log.info("Order executed fully. Setting order status to fulfilled.");
@@ -326,6 +378,10 @@ public class OrderProcessingService {
         log.info("Order status successfully set to fulfilled");
     }
 
+    /**
+     * @param execution
+     * @param holding
+     */
     public void updateClientHoldingOnBuy(Execution execution, Holding holding)
     {
         log.info("Updating client holding");
@@ -336,6 +392,10 @@ public class OrderProcessingService {
         log.info("Client holding updated successfully");
     }
 
+    /**
+     * @param execution
+     * @param holding
+     */
     public void updateClientHoldingOnSell(Execution execution, Holding holding)
     {
         log.info("updating holding to reflect execution");

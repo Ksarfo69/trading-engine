@@ -34,7 +34,10 @@ public class ClientService {
     private TickerRepository tickerRepository;
 
 
-
+    /**
+     * @param client
+     * @return
+     */
     public String saveClient(Client client)
     {
         log.info("saving client with details: {}", client);
@@ -47,6 +50,11 @@ public class ClientService {
     }
 
 
+    /**
+     * @param username
+     * @param request
+     * @return
+     */
     public String createPortfolio(String username, PortfolioRegistrationRequest request)
     {
         log.info("Creating portfolio with details: {}", request);
@@ -67,6 +75,10 @@ public class ClientService {
     }
 
 
+    /**
+     * @param username
+     * @return
+     */
     public List<FetchPortfolioResponse> fetchAllClientPortfolios(String username)
     {
         log.info("Fetching Client: {} portfolios", username);
@@ -94,8 +106,10 @@ public class ClientService {
     }
 
 
-
-
+    /**
+     * @param portfolioId
+     * @return
+     */
     public List<Holding> findHoldingsByPortfolio(Long portfolioId)
     {
         log.info("Fetching portfolio with id: {}", portfolioId);
@@ -115,6 +129,11 @@ public class ClientService {
     }
 
 
+    /**
+     * @param portfolioId
+     * @param request
+     * @return
+     */
     public String createOrder(Long portfolioId, ClientOrderRegistrationRequest request)
     {
         //create the order
@@ -177,6 +196,10 @@ public class ClientService {
     }
 
 
+    /**
+     * @param portfolioId
+     * @return
+     */
     public List<FetchOrderResponse> fetchAllClientHoldingByPortfolio(Long portfolioId) {
         Portfolio portfolio = portfolioRepository.findById(portfolioId).get();
 
@@ -198,6 +221,10 @@ public class ClientService {
     }
 
 
+    /**
+     * @param orderId
+     * @return
+     */
     public List<FetchExecutionResponse> fetchAllExecutionsForClientOrder(Long orderId) {
 
         log.info("Fetching all execution for order: {}", orderId);

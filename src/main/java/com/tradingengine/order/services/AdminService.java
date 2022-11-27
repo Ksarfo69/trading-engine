@@ -27,12 +27,6 @@ public class AdminService {
     private TickerRepository tickerRepository;
 
     @Autowired
-    private PortfolioRepository portfolioRepository;
-
-    @Autowired
-    private HoldingRepository holdingRepository;
-
-    @Autowired
     private OrderProcessingService orderProcessingService;
 
 
@@ -87,7 +81,7 @@ public class AdminService {
         if(Objects.isNull(holding)
                 && request.quantity() <= clientOrder.getQuantity()
                 || Objects.nonNull(holding)
-                && request.quantity() <= clientOrder.getQuantity() - holding.getQuantity()
+                && request.quantity() <= holding.getQuantity()
         )
         {
             Double engineProfit;
