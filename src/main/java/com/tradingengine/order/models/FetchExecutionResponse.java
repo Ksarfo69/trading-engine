@@ -1,9 +1,9 @@
 package com.tradingengine.order.models;
 
-import java.time.LocalDate;
+import java.sql.Timestamp;
 
 public record FetchExecutionResponse(
-        LocalDate createdAt,
+        Timestamp timestamp,
         Integer quantity,
         Double price
 ) {

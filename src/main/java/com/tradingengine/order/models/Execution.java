@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.sql.Timestamp;
 
 @Data
 @Builder
@@ -30,8 +30,8 @@ public class Execution {
     @JoinColumn(referencedColumnName = "orderId", nullable = false)
     private ClientOrder clientOrder;
 
-    @Column(name = "createdAt")
-    private LocalDate createdAt;
+    @Column(name = "timestamp")
+    private Timestamp timestamp;
 
     @Column(name = "quantity")
     private Integer quantity;

@@ -39,7 +39,7 @@ public class Holding {
     @Column(name = "status")
     private HoldingStatus status;
 
-    @Column(name = "createdAt")
+    @Column(name = "timestamp")
     private LocalDate createdAt;
 
     @Column(name = "updatedAt")

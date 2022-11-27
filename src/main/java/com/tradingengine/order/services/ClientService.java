@@ -47,17 +47,6 @@ public class ClientService {
     }
 
 
-//    public Client findClientByUserName(String username)
-//    {
-//        return clientRepository.findClientByUsername(username);
-//    }
-
-//    public List<Client> fetchAllClients()
-//    {
-//        return clientRepository.findAll();
-//    }
-
-
     public String createPortfolio(String username, PortfolioRegistrationRequest request)
     {
         log.info("Creating portfolio with details: {}", request);
@@ -228,7 +217,7 @@ public class ClientService {
         {
             responseList.add(
                     new FetchExecutionResponse(
-                            execution.getCreatedAt(),
+                            execution.getTimestamp(),
                             execution.getQuantity(),
                             execution.getPrice()
                     )
