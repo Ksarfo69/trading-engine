@@ -24,8 +24,16 @@ public class ClientOrder {
     private Long orderId;
 
     @ManyToOne
+    @JoinColumn(referencedColumnName = "portfolioId")
+    private Portfolio portfolio;
+
+    @ManyToOne
     @JoinColumn(referencedColumnName = "holdingId")
     private Holding holding;
+
+    @ManyToOne
+    @JoinColumn(referencedColumnName = "tickerName")
+    private Ticker ticker;
 
     @Column(name = "quantity")
     private Integer quantity;

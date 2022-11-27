@@ -4,6 +4,7 @@ import com.tradingengine.order.models.*;
 import com.tradingengine.order.repositories.HoldingRepository;
 import com.tradingengine.order.repositories.PortfolioRepository;
 import com.tradingengine.order.repositories.TickerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional
 public class HoldingService {
 
     @Autowired
@@ -25,12 +27,11 @@ public class HoldingService {
 
     public Holding saveHolding(Portfolio portfolio, HoldingRegistrationRequest request)
     {
-
         Holding holding = Holding.builder()
                 .portfolio(portfolio)
                 .ticker(request.ticker())
-                .accumulatedProfit(0d)
                 .quantity(request.quantity())
+                .accumulatedProfit(0d)
                 .createdAt(LocalDate.now())
                 .status(HoldingStatus.AVAILABLE)
                 .build();

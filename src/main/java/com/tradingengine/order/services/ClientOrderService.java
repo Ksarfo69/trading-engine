@@ -2,6 +2,8 @@ package com.tradingengine.order.services;
 
 import com.tradingengine.order.models.*;
 import com.tradingengine.order.repositories.*;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Slf4j
+@Transactional
 public class ClientOrderService {
 
     @Autowired
@@ -26,16 +30,30 @@ public class ClientOrderService {
     @Autowired
     private ClientRepository clientRepository;
 
-    public ClientOrder saveOrder(Holding holding, ClientOrderRegistrationRequest request)
+    public ClientOrder saveOrder(Long portfolioId, ClientOrderRegistrationRequest request)
     {
         ClientOrder clientOrder;
 
+        //get the portfolio
+        log.info("Fetching portfolio with id: {}", portfolioId);
+
+        Portfolio portfolio = portfolioRepository.findById(portfolioId).get();
+
+        log.info("Portfolio fetched successfully with details: {}", portfolio);
+
+
+        log.info("Fetching ticker with name: {}", request.tickerName());
+
+        Ticker ticker = tickerRepository.findTickerByTickerName(request.tickerName());
+
+        log.info("Ticker fetched successfully with details: {}", ticker);
 
 
         if(request.side() == Side.BUY)
         {
             clientOrder = ClientOrder.builder()
-                    .holding(holding)
+                    .portfolio(portfolio)
+                    .ticker(ticker)
                     .quantity(request.quantity())
                     .price(request.price())
                     .side(request.side())
@@ -44,13 +62,16 @@ public class ClientOrderService {
         }
         else
         {
-            Holding sellingHolding = holdingRepository.findById(request.holdingId()).get();
+            Holding holding = holdingRepository.findById(request.holdingId()).get();
 
             clientOrder = ClientOrder.builder()
-                    .holding(sellingHolding)
+                    .portfolio(portfolio)
+                    .ticker(ticker)
+                    .holding(holding)
                     .quantity(request.quantity())
                     .price(request.price())
                     .side(request.side())
+                    .profit(0d)
                     .orderStatus(OrderStatus.PENDING)
                     .build();
         }

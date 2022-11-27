@@ -7,6 +7,7 @@ import com.tradingengine.order.models.PortfolioRegistrationRequest;
 import com.tradingengine.order.repositories.ClientRepository;
 import com.tradingengine.order.repositories.HoldingRepository;
 import com.tradingengine.order.repositories.PortfolioRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional
 public class PortfolioService {
 
     @Autowired
